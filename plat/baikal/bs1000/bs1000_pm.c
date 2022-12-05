@@ -10,8 +10,10 @@
 #include <lib/psci/psci.h>
 #include <plat/arm/common/plat_arm.h>
 #include <plat/common/platform.h>
+#include <drivers/delay_timer.h>
 
 #include <baikal_gicv3.h>
+#include <dw_gpio.h>
 #include <bs1000_def.h>
 
 #include "bs1000_ca75.h"
@@ -31,6 +33,11 @@
 #define bs1000_make_pwrstate_lvl1(lvl1_state, lvl0_state, pwr_lvl, type) \
 		(((lvl1_state) << PLAT_LOCAL_PSTATE_WIDTH) |		 \
 		 bs1000_make_pwrstate_lvl0(lvl0_state, pwr_lvl, type))
+
+#if defined(ELPITECH)
+#define BS_POWER_PIN	11
+#define BS_RESET_PIN	7
+#endif
 
 static int bs1000_validate_power_state(unsigned int power_state, psci_power_state_t *req_state)
 {
@@ -164,6 +171,11 @@ static void bs1000_pwr_domain_suspend_finish(const psci_power_state_t *target_st
 static void __dead2 bs1000_system_off(void)
 {
 	dsb();
+#if defined(ELPITECH)
+	gpio_out_rst(GPIO32_BASE, BS_POWER_PIN);
+	gpio_dir_set(GPIO32_BASE, BS_POWER_PIN);
+	mdelay(4000);
+#endif
 	ERROR("%s: operation not supported\n", __func__);
 	for (;;) {
 		wfi();
@@ -173,6 +185,11 @@ static void __dead2 bs1000_system_off(void)
 static void __dead2 bs1000_system_reset(void)
 {
 	dsb();
+#if defined(ELPITECH)
+	gpio_out_rst(GPIO32_BASE, BS_RESET_PIN);
+	gpio_dir_set(GPIO32_BASE, BS_RESET_PIN);
+	mdelay(4000);
+#endif
 	ERROR("%s: operation not supported\n", __func__);
 	for (;;) {
 		wfi();

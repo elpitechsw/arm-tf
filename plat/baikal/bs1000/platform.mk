@@ -134,6 +134,7 @@ BL31_SOURCES		+=	drivers/delay_timer/delay_timer.c		\
 				plat/baikal/common/baikal_sip_svc_flash.c	\
 				plat/baikal/common/crc.c			\
 				plat/baikal/common/dw_i2c.c			\
+				plat/baikal/common/dw_gpio.c			\
 				plat/baikal/common/ndelay.c			\
 				plat/baikal/common/spd.c			\
 				plat/common/plat_gicv3.c			\
