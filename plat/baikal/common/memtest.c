@@ -17,6 +17,8 @@ int memtest_rand64(const uintptr_t base,
 {
 	uint64_t *ptr;
 	int ret = 0;
+	int err_cnt = 0;
+	uint64_t all_set = 0, all_cleared = 0;
 	uint64_t val;
 
 	assert(!(base % sizeof(uint64_t)));
@@ -39,13 +41,29 @@ int memtest_rand64(const uintptr_t base,
 	do {
 		val = xorshift64(val);
 		if (*ptr != val) {
+			uint64_t set, cleared;
+			uint64_t d = *ptr ^ val;
+                        set = d & *ptr;
+                        cleared = d & val;
+                        all_set |= set;
+                        all_cleared |= cleared;
+
 			ret = -1;
+			if (err_cnt++ < 10) {
 			ERROR("%s @ %p: expected:0x%016lx actual:0x%016lx\n",
 			      __func__, ptr, val, *ptr);
+			ERROR("\t(set: %016lx, cleared: %016lx)\n",
+                                set, cleared);
+			}
 		}
 
 		ptr += incr / sizeof(uint64_t);
 	} while (ptr < (uint64_t *)(base + size));
+
+	if (err_cnt) {
+                ERROR("%s: total %d errors (set bits: %016lx, cleared bits: %016lx)\n",
+                        __func__, err_cnt, all_set, all_cleared);
+        }
 
 	return ret;
 }
