@@ -431,6 +431,13 @@ void bl31_platform_setup(void)
 	bs1000_smmu_s_init();
 	bs1000_usb_init();
 
+#ifdef BAIKAL_MUX_INIT
+	/* setup mux state */
+	scp_lcru_clrsetbits(SCP_GPR_LSP_CTL,
+			    SCP_GPR_LSP_CTL_SEL_PERIPH_MASK,
+			    BAIKAL_MUX_INIT << SCP_GPR_LSP_CTL_SEL_PERIPH_SHIFT);
+#endif
+
 	baikal_fdt_memory_update();
 #if (PLATFORM_CHIP_COUNT == 1)
 	/* Skipped in multichip config due to SPI interrupts limit */
