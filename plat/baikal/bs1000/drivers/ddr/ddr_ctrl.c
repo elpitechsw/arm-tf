@@ -460,15 +460,11 @@ int ctrl_init(int port, struct ddr_configuration *data)
 	/* configure a ODTMAP reg. */
 	if (data->dimms == 1) {
 		/* ODT signal mapping: single DIMM */
-		if (data->ranks == 1) {
-			regval = 0x00000201; /* single DIMM, 1-rank ODT mask */
-		} else {
-			regval = 0x00000102; /* single DIMM, 2-rank ODT mask */
-		}
+		regval = 0; /* no ODT signal needed */
 	} else {
 		/* ODT signal mapping: dual DIMM */
 		if (data->ranks == 1) {
-			regval = 0x00010004; /* dual DIMMs, 1-rank ODT mask */
+			regval = 0x00110044; /* dual DIMMs, 1-rank ODT mask */
 		} else {
 			regval = 0x22228888; /* dual DIMMs, 2-rank ODT mask */
 		}

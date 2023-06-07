@@ -27,10 +27,10 @@ struct odt_settings {
 };
 
 static const struct odt_settings dram_odt_set[] = {
-	{ 0, 4, 0, 0, 82,  14, 80, 34 },
-	{ 0, 0, 5, 0, 84,  26, 80, 34 },
-	{ 0, 1, 3, 7, 100, 28, 80, 34 },
-	{ 0, 2, 7, 4, 102, 30, 80, 34 }
+	{ 0, 1, 0, 0, 82,  14, 80, 34 },
+	{ 0, 1, 3, 0, 84,  26, 80, 34 },
+	{ 0, 1, 3, 0, 100, 28, 80, 34 },
+	{ 0, 1, 3, 0, 102, 30, 80, 34 }
 };
 
 int ddr_odt_configuration(const unsigned int port,

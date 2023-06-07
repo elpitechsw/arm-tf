@@ -55,23 +55,16 @@ void phyinit_calcMb(void *mb, struct ddr_configuration *data, int training_2d)
 			pmu_smb_p->AcsmOdtCtrl2 = 0x2 | 0x20;
 			pmu_smb_p->AcsmOdtCtrl3 = 0x2 | 0x20;
 		} else {
-			pmu_smb_p->AcsmOdtCtrl0 = 0x4;
+			pmu_smb_p->AcsmOdtCtrl0 = 0x44;
 			pmu_smb_p->AcsmOdtCtrl1 = 0x0;
-			pmu_smb_p->AcsmOdtCtrl2 = 0x1;
+			pmu_smb_p->AcsmOdtCtrl2 = 0x11;
 			pmu_smb_p->AcsmOdtCtrl3 = 0x0;
 		}
 	} else {
-		if (data->ranks == 2) {
-			pmu_smb_p->AcsmOdtCtrl0 = 0x2;
-			pmu_smb_p->AcsmOdtCtrl1 = 0x1;
-			pmu_smb_p->AcsmOdtCtrl2 = 0x0;
-			pmu_smb_p->AcsmOdtCtrl3 = 0x0;
-		} else {
-			pmu_smb_p->AcsmOdtCtrl0 = 0x1;
-			pmu_smb_p->AcsmOdtCtrl1 = 0x2;
-			pmu_smb_p->AcsmOdtCtrl2 = 0x0;
-			pmu_smb_p->AcsmOdtCtrl3 = 0x0;
-		}
+		pmu_smb_p->AcsmOdtCtrl0 = 0x0;
+		pmu_smb_p->AcsmOdtCtrl1 = 0x0;
+		pmu_smb_p->AcsmOdtCtrl2 = 0x0;
+		pmu_smb_p->AcsmOdtCtrl3 = 0x0;
 	}
 
 	pmu_smb_p->EnabledDQs = (data->ecc_on ? 9 : 8) * 8;
