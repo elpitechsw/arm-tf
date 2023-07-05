@@ -14,6 +14,8 @@
 
 #define PHYINIT_SEQUENCENUM	0
 
+static struct pmu_smb_ddr4_t msg_block;
+
 int phy_main(int port, struct ddr_configuration *data)
 {
 	int ret = 0;
@@ -38,8 +40,6 @@ int phy_main(int port, struct ddr_configuration *data)
 	/* Note: this routine implies other items such as DfiFreqRatio, DfiCtlClk are also set properly. */
 
 	/* (F) Write the Message Block parameters for the training firmware */
-	struct pmu_smb_ddr4_t msg_block = {0};
-
 	phyinit_calcMb((void *)&msg_block, data, false);
 
 	phyinit_F_LoadDMEM(port, data, &msg_block, false);
