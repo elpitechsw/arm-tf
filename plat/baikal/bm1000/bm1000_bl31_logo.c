@@ -1,1 +1,1 @@
-bm1000_bl31_logo_v4.c
+elpitech_bl31_logo.c
