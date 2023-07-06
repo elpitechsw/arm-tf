@@ -57,19 +57,19 @@ struct smbus_regs {
 
 #define FIFO_SIZE	U(16)
 
-unsigned int smbus_txrx(const uintptr_t base,
-			const unsigned int iclk,
-			const enum smbus_sht sht,
-			const unsigned int sclclk,
-			const unsigned int targetaddr,
-			const void *const txbuf,
-			const unsigned int txbufsize,
-			void *const rxbuf,
-			const unsigned int rxbufsize)
+int smbus_txrx(const uintptr_t base,
+		const unsigned int iclk,
+		const enum smbus_sht sht,
+		const unsigned int sclclk,
+		const unsigned int targetaddr,
+		const void *const txbuf,
+		const unsigned int txbufsize,
+		void *const rxbuf,
+		const unsigned int rxbufsize)
 {
 	volatile struct smbus_regs *const smbusregs = (volatile struct smbus_regs *const)base;
 	const unsigned int sclclkdiv = iclk / sclclk - 1;
-	unsigned int rxedsize = 0;
+	int rxedsize = -1;
 	uint8_t *const rxptr = (uint8_t *)rxbuf;
 	const uint8_t *const txptr = (uint8_t *)txbuf;
 
