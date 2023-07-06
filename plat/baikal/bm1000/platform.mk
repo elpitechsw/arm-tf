@@ -47,6 +47,12 @@ else ifeq ($(BAIKAL_TARGET),mbm10)
 $(eval $(call add_define,BAIKAL_MBM10))
 else ifeq ($(BAIKAL_TARGET),mbm20)
 $(eval $(call add_define,BAIKAL_MBM20))
+else ifeq ($(BAIKAL_TARGET),elp_bm)
+$(eval $(call add_define,ELPITECH))
+$(eval $(call add_define,BOARD_VER))
+ifneq ($(BAIKAL_DDR_CUSTOM_CLOCK_FREQ),)
+$(eval $(call add_define,BAIKAL_DDR_CUSTOM_CLOCK_FREQ))
+endif
 else ifeq ($(BAIKAL_TARGET),qemu-m)
 $(eval $(call add_define,BAIKAL_QEMU))
 else

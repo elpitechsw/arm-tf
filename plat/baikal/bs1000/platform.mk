@@ -26,6 +26,11 @@ $(eval $(call add_define,BAIKAL_MBS_2S))
 PLATFORM_CHIP_COUNT		:=	2
 PLATFORM_ADDR_BITS_PER_CHIP	:=	43
 SYSTEM_COUNTERS_RESYNC		:=	no
+else ifeq ($(BAIKAL_TARGET),elp_bs)
+$(eval $(call add_define,ELPITECH))
+ifneq ($(BAIKAL_DDR_CUSTOM_CLOCK_FREQ),)
+$(eval $(call add_define,BAIKAL_DDR_CUSTOM_CLOCK_FREQ))
+endif
 else ifeq ($(BAIKAL_TARGET),qemu-s)
 $(eval $(call add_define,BAIKAL_QEMU))
 else
