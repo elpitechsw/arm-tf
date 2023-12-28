@@ -50,6 +50,9 @@ $(eval $(call add_define,BAIKAL_MBM20))
 else ifeq ($(BAIKAL_TARGET),elp_bm)
 $(eval $(call add_define,ELPITECH))
 $(eval $(call add_define,BOARD_VER))
+ifneq ($(ARMTF_NO_PRINT),)
+$(eval $(call add_define,ARMTF_NO_PRINT))
+endif
 ifneq ($(BAIKAL_DDR_CUSTOM_CLOCK_FREQ),)
 $(eval $(call add_define,BAIKAL_DDR_CUSTOM_CLOCK_FREQ))
 endif

@@ -856,6 +856,7 @@ int bmp_to_fb(uintptr_t fb, const modeline_t *mode, const uint8_t *bmp_file, int
 
 void fb_print(void *fb_base, const modeline_t *mode, int fb_cpp, int row, int col, const char *s)
 {
+#ifndef ARMTF_NO_PRINT
 	int i, j, ch, line_width, char_width, max_cols, max_rows;
 	const uint8_t *f;
 	unsigned int color;
@@ -894,7 +895,8 @@ void fb_print(void *fb_base, const modeline_t *mode, int fb_cpp, int row, int co
 			x++;
 		}
 	}
-	flush_dcache_range((uintptr_t)fb_base, line_width * mode->vact);
+#endif
+	flush_dcache_range((uintptr_t)fb_base, mode->hact * fb_cpp * mode->vact);
 }
 
 void print_sdk_version(uintptr_t fb_base, const modeline_t *mode, int w1, int h1, const char *version)
