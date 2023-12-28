@@ -579,7 +579,7 @@ void ctrl_complete_phy_init(int port, struct ddr_configuration *data)
 		if (BS_DDRC_READ(port, DFISTAT) & 1) {
 			break;
 		} else if (timeout_elapsed(timeout)) {
-			ERROR("%s:%d failed to prepare PHY init\n", __func__, __LINE__);
+			ERROR("%s:%d failed to prepare PHY init (port %d)\n", __func__, __LINE__, port);
 			break;
 		}
 	}
