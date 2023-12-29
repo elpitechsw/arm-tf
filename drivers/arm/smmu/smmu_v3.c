@@ -6,6 +6,7 @@
 
 #include <common/debug.h>
 #include <cdefs.h>
+#include <stdbool.h>
 #include <drivers/arm/smmu_v3.h>
 #include <drivers/delay_timer.h>
 #include <lib/mmio.h>
@@ -67,6 +68,15 @@ int __init smmuv3_security_init(uintptr_t smmu_base)
 			SMMU_S_GBPA_UPDATE | SMMU_S_GBPA_ABORT);
 
 	return smmuv3_poll(smmu_base + SMMU_S_GBPA, SMMU_S_GBPA_UPDATE, 0U);
+}
+
+int smmuv3_invalidate_all(uintptr_t smmu_base)
+{
+	mmio_write_32(smmu_base + SMMU_S_INIT, SMMU_S_INIT_INV_ALL);
+
+	/* Wait for global invalidation operation to finish */
+	return smmuv3_poll(smmu_base + SMMU_S_INIT,
+				SMMU_S_INIT_INV_ALL, 0U);
 }
 
 /*
@@ -149,11 +159,7 @@ int __init smmuv3_init(uintptr_t smmu_base)
 	 * the SMMU_S_INIT.INV_ALL mechanism also invalidates GPT information
 	 * cached in TLBs.
 	 */
-	mmio_write_32(smmu_base + SMMU_S_INIT, SMMU_S_INIT_INV_ALL);
-
-	/* Wait for global invalidation operation to finish */
-	return smmuv3_poll(smmu_base + SMMU_S_INIT,
-				SMMU_S_INIT_INV_ALL, 0U);
+	return smmuv3_invalidate_all(smmu_base);
 }
 
 int smmuv3_ns_set_abort_all(uintptr_t smmu_base)
@@ -175,6 +181,38 @@ int smmuv3_ns_set_abort_all(uintptr_t smmu_base)
 	/* Disable the SMMU to engage the GBPA fields previously configured. */
 	mmio_clrbits_32(smmu_base + SMMU_CR0, SMMU_CR0_SMMUEN);
 	if (smmuv3_poll(smmu_base + SMMU_CR0ACK, SMMU_CR0_SMMUEN, 0U) != 0U) {
+		return -1;
+	}
+
+	return 0;
+}
+
+int smmuv3_enable_queues(uintptr_t smmu_base, bool sec)
+{
+	uintptr_t reg = sec ? SMMU_S_CR0 : SMMU_CR0,
+		  ack = sec ? SMMU_S_CR0ACK : SMMU_CR0ACK;
+
+	mmio_setbits_32(smmu_base + reg, SMMU_CR0_CMDQEN);
+	if (smmuv3_poll(smmu_base + ack, SMMU_CR0_CMDQEN, SMMU_CR0_CMDQEN) != 0) {
+		WARN("Failed enabling SMMU Command queue.\n");
+		return -1;
+	}
+	mmio_setbits_32(smmu_base + reg, SMMU_CR0_EVENTQEN);
+	if (smmuv3_poll(smmu_base + ack, SMMU_CR0_EVENTQEN, SMMU_CR0_EVENTQEN) != 0) {
+		WARN("Failed enabling SMMU Event queue.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int smmuv3_enable(uintptr_t smmu_base, bool sec)
+{
+	uintptr_t reg = sec ? SMMU_S_CR0 : SMMU_CR0,
+		  ack = sec ? SMMU_S_CR0ACK : SMMU_CR0ACK;
+
+	mmio_setbits_32(smmu_base + reg, SMMU_CR0_SMMUEN);
+	if (smmuv3_poll(smmu_base + ack, SMMU_CR0_SMMUEN, SMMU_CR0_SMMUEN) != 0U) {
 		return -1;
 	}
 
