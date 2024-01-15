@@ -25,6 +25,7 @@ int ddr_config_by_spd(int port, struct ddr_configuration *data)
 	uint32_t tmp;
 	extern struct spd_container spd_content;
 	struct ddr4_spd_eeprom *const spd = &spd_content.content[port];
+	struct ddr_local_conf *conf = (struct ddr_local_conf *)spd->user;
 
 	data->dimms = 1;
 #ifdef BAIKAL_DUAL_CHANNEL_MODE
@@ -124,12 +125,24 @@ int ddr_config_by_spd(int port, struct ddr_configuration *data)
 	} else {
 		data->clock_mhz = 1333;
 	}
+	if (conf->freq)
+		data->clock_mhz = conf->freq / 2;
 #ifdef BAIKAL_DDR_CUSTOM_CLOCK_FREQ
-	if (data->clock_mhz > BAIKAL_DDR_CUSTOM_CLOCK_FREQ) {
+	else if (data->clock_mhz > BAIKAL_DDR_CUSTOM_CLOCK_FREQ) {
 		data->clock_mhz = BAIKAL_DDR_CUSTOM_CLOCK_FREQ;
-		data->tCK = 1000000 / data->clock_mhz;
 	}
 #endif
+	if (data->clock_mhz >= 1333)
+		data->clock_mhz = 1333;
+	else if (data->clock_mhz >= 1200)
+		data->clock_mhz = 1200;
+	else if (data->clock_mhz >= 1066)
+		data->clock_mhz = 1066;
+	else if (data->clock_mhz >= 933)
+		data->clock_mhz = 933;
+	else data->clock_mhz = 800;
+	data->tCK = 1000000 / data->clock_mhz; /* recalculate */
+
 #ifdef BAIKAL_DDR_SETTINGS_IN_FLASH
 	if (ddr_storage.ddr_sign == BAIKAL_FLASH_USE_STR) {
 		switch (ddr_storage.speedbin) {
@@ -173,6 +186,8 @@ int ddr_config_by_spd(int port, struct ddr_configuration *data)
 
 	tmp = SPD_TO_PS(spd->taa_min, spd->fine_taa_min);
 	tmp = CLOCK_PS(tmp);
+	if (conf->cl)
+		tmp += conf->cl; // increase CAS if requested by local conf
 	while (tmp < 64 && (lat_mask & (1ULL << tmp)) == 0) {
 		++tmp;
 	}
@@ -255,7 +270,10 @@ int ddr_config_by_spd(int port, struct ddr_configuration *data)
 	}
 
 	/* Compute Additive Latency (AL). Note: we set AL to (CL-1) like S.Hudchenko example */
-	data->AL = data->CL - 1;
+	if (conf->al)
+		data->AL = data->CL - conf->al;
+	else
+		data->AL = 0;
 
 	/* Compute Read Latency (RL) */
 	data->RL = data->AL + data->CL + data->PL;

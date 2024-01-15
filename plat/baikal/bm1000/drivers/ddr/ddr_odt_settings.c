@@ -9,7 +9,9 @@
 #include <baikal_def.h>
 #include "ddr_main.h"
 #include "ddr_menu.h"
+#include "ddr_spd.h"
 
+#ifndef ELPITECH
 enum {
 	ODT_SET_1RANK = 0,
 	ODT_SET_2RANK,
@@ -225,11 +227,13 @@ static void ddr_odt_flash_values(struct ddr_configuration *const data)
 	}
 }
 #endif
+#endif
 
 int ddr_odt_configuration(const unsigned int port,
 			   const uint16_t crc_val,
 			   struct ddr_configuration *const data)
 {
+#ifndef ELPITECH
 	unsigned int odt_set;
 #ifdef BAIKAL_DUAL_CHANNEL_MODE
 	if (data->dimms == 2) {
@@ -338,4 +342,17 @@ dual_channel:
 #endif
 	return -1;
 #endif /* defined(BAIKAL_DUAL_CHANNEL_MODE) */
+#else
+	extern struct spd_container spd_content;
+	struct ddr_local_conf *cfg =
+		(struct ddr_local_conf *)spd_content.content[port].user;
+
+	data->RTT_WR = cfg->rtt_wr;
+	data->RTT_NOM = cfg->rtt_nom;
+	data->RTT_PARK = cfg->rtt_park;
+	data->DIC = cfg->odi;
+	data->PHY_ODT = cfg->phy_odt;
+	data->PHY_ODI_PU = cfg->phy_odi_pu;
+	return 0;
+#endif
 }

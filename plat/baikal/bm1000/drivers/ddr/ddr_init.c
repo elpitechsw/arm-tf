@@ -321,7 +321,13 @@ static void baikal_ddrc_set_registers(const unsigned int port,
 	regval |= (6 + DDR_CRC_ENABLE) << 24;
 	BM_DDRC_WRITE(port, DDRC_ODTCFG, regval);
 	/* configure a ODTMAP reg. */
-	BM_DDRC_WRITE(port, DDRC_ODTMAP, 0x08040201);
+	/*
+	 * Board design guide recommends 40 Ohm termination on
+	 * the higher rank of the other DIMM. We presume that the rank
+	 * makes no differrence (in case of dual rank DIMMS).
+	 * Hence the setting should work in all possible cases.
+	 */
+	BM_DDRC_WRITE(port, DDRC_ODTMAP, 0x11114444);
 
 	/* Disable DFI updates (for PHY trainings) */
 	BM_DDRC_WRITE(port, DDRC_DFIUPD0, 0x80400005);
@@ -504,8 +510,10 @@ static void baikal_ddrphy_set_registers(const unsigned int port,
 	regval = set_mr0(data->CL, data->tWR, data->tRTP);
 	BM_DDR_PUB_WRITE(port, DDR_PUB_MR0, regval);
 
-	/* DLL on; DIC RZQ/7 (33 ohm); AL=CL-1; WL off; ODT RTT_NOM off; TDQS off; Qoff normal */
-	regval = 0x9 | (data->DIC & 0x1) << 1 | (data->RTT_NOM & 0x7) << 8;
+	/* DLL on; DIC RZQ/7 (33 ohm); AL=0; WL off; ODT RTT_NOM off; TDQS off; Qoff normal */
+	regval = 0x1 | (data->DIC & 0x1) << 1 | (data->RTT_NOM & 0x7) << 8;
+	if (data->AL)
+		regval |= (data->CL - data->AL) << 3;
 	BM_DDR_PUB_WRITE(port, DDR_PUB_MR1, regval);
 
 	regval = set_mr2(data->CWL, data->RTT_WR);
@@ -578,6 +586,10 @@ static void baikal_ddrphy_set_registers(const unsigned int port,
 	} else {
 		BM_DDR_PUB_WRITE(port, DDR_PUB_ZQCR, 0x04058d00);
 	}
+
+	regval = 0x0007bb00 | (data->PHY_ODT << 4) | data->PHY_ODI_PU;
+	BM_DDR_PUB_WRITE(port, DDR_PUB_ZQ0PR, regval);
+	BM_DDR_PUB_WRITE(port, DDR_PUB_ZQ1PR, regval);
 
 	if (data->dbus_half) {
 		uint32_t DXnGCR0_val = BM_DDR_PUB_READ(port, DDR_PUB_DX4GCR0);
@@ -666,6 +678,11 @@ static int baikal_ddrphy_pir_training(const unsigned int port, uint32_t mode)
 		const uint32_t reg = BM_DDR_PUB_READ(port, DDR_PUB_PGSR0);
 
 		if (reg & 0x1) {
+			if (reg & 0x0ff80000) {
+				ret = reg;
+				ERROR("%s: completed with errors, 0x%x (0x%08x)\n",
+				      __func__, ret, BM_DDR_PUB_READ(port, DDR_PUB_PGSR1));
+			}
 			break;
 		} else if (timeout_elapsed(timeout)) {
 			ret = reg;
@@ -833,6 +850,7 @@ static int baikal_ddrphy_dram_init(const unsigned int port, unsigned int clock_m
 int ddr_init(int port, bool dual_mode, struct ddr_configuration *info)
 {
 	int ret = 0;
+	unsigned int i;
 
 	ddr_lcru_clkch_rst(port, LCRU_DDR_CMU_CLKCH0_ACLK, 1);
 	ddr_lcru_clkch_rst(port, LCRU_DDR_CMU_CLKCH1_CORE, 1);
@@ -854,6 +872,15 @@ int ddr_init(int port, bool dual_mode, struct ddr_configuration *info)
 	ndelay(40);
 
 	baikal_ddrphy_set_registers(port, info);
+
+	/* set ODTCRn according to ODTMAP */
+	for (i = 0; i < 4; i++) {
+		BM_DDR_PUB_WRITE(port, DDR_PUB_RANKIDR, i);
+		if (i < 2)
+			BM_DDR_PUB_WRITE(port, DDR_PUB_ODTCR, 0x00040004);
+		else
+			BM_DDR_PUB_WRITE(port, DDR_PUB_ODTCR, 0x00010001);
+	}
 
 	if (!info->ecc_on) {
 		/* disable unused 9-th data byte */
@@ -883,7 +910,7 @@ int ddr_init(int port, bool dual_mode, struct ddr_configuration *info)
 					| (info->PHY_HOST_VREF << 16)
 					| (info->PHY_HOST_VREF << 8)
 					| (info->PHY_HOST_VREF);
-		for (int i = 0; i <= 8; i++) {
+		for (i = 0; i <= 8; i++) {
 			/* all registers lie at constant offsets from one another: */
 			BM_DDR_PUB_WRITE(port, DDR_PUB_DX0GCR5 +
 					(DDR_PUB_DX1GCR5 - DDR_PUB_DX0GCR5) * i,

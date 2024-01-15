@@ -252,5 +252,6 @@ struct spd_container {
 #define DDR4_SPD_MODULETYPE_32B_SO_DIMM		0x0d
 
 void *ddr_read_spd(const unsigned int dimm_idx);
+void ddr_write_conf(unsigned dimm_idx, void *buf, int size);
 
 #endif /* DDR_SPD_H */

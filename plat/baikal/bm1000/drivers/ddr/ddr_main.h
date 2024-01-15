@@ -86,10 +86,37 @@ struct ddr_configuration {
 	uint32_t RTT_NOM;	/* NOM pullup impedance */
 	uint32_t RTT_WR;	/* WR pullup impedance */
 	uint32_t DIC;		/* output driver impedance */
+
+	/* PHY impedance settings */
+	uint32_t PHY_ODI_PU;
+	uint32_t PHY_ODI_PD;
+	uint32_t PHY_ODT;
+
 	uint32_t PHY_HOST_VREF;
 	uint32_t PHY_DRAM_VREF;
 };
 
+/*
+ * DDR fine tune config
+ */
+
+struct ddr_local_conf {
+	uint8_t 	magic[4];
+#define ELP_DDR_CONF_MAGIC	{'E', 'L', 'P', '0' + BOARD_VER}
+	uint16_t	freq; /* 0 - default */
+	uint8_t		dimms; /* bit 0 - channel number, bit 1 - two DIMMS in channel */
+	uint8_t		cl; /* CAS Latency. 0 - default, 1 - increase by 1 */
+	uint8_t		al; /* 0 - not used, 1 - CL-1, ... */
+	uint8_t		rtt_wr;
+	uint8_t		rtt_nom;
+	uint8_t		rtt_park;
+	uint8_t		odi;
+	uint8_t		phy_odt;
+	uint8_t		phy_odi_pu;
+	uint16_t	crc;
+};
+
+int ddr_conf(unsigned dimm_cfg);
 int dram_init(void);
 int ddr_init(int port, bool dual_mode, struct ddr_configuration *data);
 int ddr_lcru_initport(int port, uint32_t clock_mhz);

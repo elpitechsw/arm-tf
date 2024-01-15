@@ -144,6 +144,8 @@ int dram_init(void)
 		}
 	}
 
+	ddr_conf(conf);
+
 	if (conf & 0x1) {
 		ret = ddr_port_init(0, &spd_content, conf & 0x2);
 	} else {

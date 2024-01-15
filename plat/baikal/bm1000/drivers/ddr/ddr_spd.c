@@ -13,6 +13,7 @@
 #include <bm1000_smbus.h>
 #include <crc.h>
 #include <dw_i2c.h>
+#include <ndelay.h>
 
 #include "ddr_spd.h"
 
@@ -42,6 +43,8 @@ static const uint8_t spd_static[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0xa0
 };
+#else
+const uint8_t spd_bus_addrs[] = {DIMM0_SPD_ADDR, DIMM1_SPD_ADDR};
 #endif
 
 void *ddr_read_spd(const unsigned int dimm_idx)
@@ -51,7 +54,6 @@ void *ddr_read_spd(const unsigned int dimm_idx)
 #ifndef BAIKAL_DIMM_SPD_STATIC
 	unsigned int page;
 	int rxsize = 0;
-	const uint8_t spd_bus_addrs[] = {DIMM0_SPD_ADDR, DIMM1_SPD_ADDR};
 	uint8_t startaddr = 0;
 #ifdef BAIKAL_DUAL_CHANNEL_MODE
 	uint8_t channel_bytes[SPD_PAGE_SIZE / 2];
@@ -113,4 +115,38 @@ void *ddr_read_spd(const unsigned int dimm_idx)
 _exit:
 #endif
 	return p;
+}
+
+void ddr_write_conf(unsigned dimm_idx, void *buf, int size)
+{
+	uint8_t local_buf[17];
+	int txsize = 0, len;
+
+	local_buf[0] = 0;
+	BAIKAL_SPD_TXRX(SPD_SPA0 + 1, local_buf, 1, NULL, 0);
+
+	while (txsize < size) {
+		len = MIN(16, size - txsize);
+		local_buf[0] = 128 + txsize;
+		memcpy(local_buf + 1, buf + txsize, len);
+		if (BAIKAL_SPD_TXRX(spd_bus_addrs[dimm_idx], local_buf, len + 1, NULL, 0) < 0) {
+			if (txsize > 0) { /* EEPROM may be busy with preceding write */
+				ndelay(5000000);
+				if (BAIKAL_SPD_TXRX(spd_bus_addrs[dimm_idx],
+						local_buf, len + 1, NULL, 0) < 0)
+					break;
+			} else {
+				break;
+			}
+		}
+		txsize += len;
+	}
+
+	if (txsize != size) {
+		ERROR("Can't write into SPD page 1 - size %d, txsize %d (dimm_idx %d)\n",
+			size, txsize, dimm_idx);
+	}
+
+	local_buf[0] = 0;
+	BAIKAL_SPD_TXRX(SPD_SPA0, local_buf, 1, NULL, 0);
 }
