@@ -192,8 +192,10 @@ struct clk_desc *cmu_desc_create(void *fdt, int offs, int index)
 	}
 	/* Avoid 'fdt64_to_cpu()' with prop pointer: it could lead to unaligned access */
 	base = fdt32_to_cpu(prop[0]);
-	base <<= 32;
-	base |= fdt32_to_cpu(prop[1]);
+	if (proplen == 8) { /* 64-bit base */
+		base <<= 32;
+		base |= fdt32_to_cpu(prop[1]);
+	}
 
 	/* index */
 	prop = fdt_getprop(fdt, offs, "clock-indices", &proplen);
