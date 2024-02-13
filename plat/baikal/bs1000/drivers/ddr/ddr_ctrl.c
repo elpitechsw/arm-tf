@@ -458,18 +458,7 @@ int ctrl_init(int port, struct ddr_configuration *data)
 	BS_DDRC_WRITE(port, ODTCFG, regval); /* cons. using wr_preamble */
 
 	/* configure a ODTMAP reg. */
-	if (data->dimms == 1) {
-		/* ODT signal mapping: single DIMM */
-		regval = 0; /* no ODT signal needed */
-	} else {
-		/* ODT signal mapping: dual DIMM */
-		if (data->ranks == 1) {
-			regval = 0x00110044; /* dual DIMMs, 1-rank ODT mask */
-		} else {
-			regval = 0x22228888; /* dual DIMMs, 2-rank ODT mask */
-		}
-	}
-	BS_DDRC_WRITE(port, ODTMAP, regval);
+	BS_DDRC_WRITE(port, ODTMAP, data->odt_map);
 
 	/* Program DQ Map */
 	/* configure a DQMAP0 reg. */

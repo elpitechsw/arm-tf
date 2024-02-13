@@ -48,24 +48,10 @@ void phyinit_calcMb(void *mb, struct ddr_configuration *data, int training_2d)
 	/* Set AddrMirror if CS[pstate] is mirrored. (typically odd CS are mirroed in DIMMs) */
 	pmu_smb_p->AddrMirror = data->mirrored_dimm ? 0xa : 0;
 
-	if (data->dimms == 2) {
-		if (data->ranks == 2) {
-			pmu_smb_p->AcsmOdtCtrl0 = 0x8 | 0x80;
-			pmu_smb_p->AcsmOdtCtrl1 = 0x8 | 0x80;
-			pmu_smb_p->AcsmOdtCtrl2 = 0x2 | 0x20;
-			pmu_smb_p->AcsmOdtCtrl3 = 0x2 | 0x20;
-		} else {
-			pmu_smb_p->AcsmOdtCtrl0 = 0x44;
-			pmu_smb_p->AcsmOdtCtrl1 = 0x0;
-			pmu_smb_p->AcsmOdtCtrl2 = 0x11;
-			pmu_smb_p->AcsmOdtCtrl3 = 0x0;
-		}
-	} else {
-		pmu_smb_p->AcsmOdtCtrl0 = 0x0;
-		pmu_smb_p->AcsmOdtCtrl1 = 0x0;
-		pmu_smb_p->AcsmOdtCtrl2 = 0x0;
-		pmu_smb_p->AcsmOdtCtrl3 = 0x0;
-	}
+	pmu_smb_p->AcsmOdtCtrl0 = data->odt_map & 0xff;
+	pmu_smb_p->AcsmOdtCtrl1 = (data->odt_map >> 8) & 0xff;
+	pmu_smb_p->AcsmOdtCtrl2 = (data->odt_map >> 16) & 0xff;
+	pmu_smb_p->AcsmOdtCtrl3 = (data->odt_map >> 24) & 0xff;
 
 	pmu_smb_p->EnabledDQs = (data->ecc_on ? 9 : 8) * 8;
 	pmu_smb_p->PhyCfg = data->timing_2t;

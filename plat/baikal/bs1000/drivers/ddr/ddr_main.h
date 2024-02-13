@@ -46,6 +46,7 @@ struct ddr_configuration {
 	uint32_t mirrored_dimm;
 	uint32_t DQ_map[5];	/* DQ Mapping */
 	uint32_t DQ_swap_rank;	/* DQ Swap Rank */
+	uint32_t odt_map;
 	uint32_t timing_2t;	/* use 2T timing for C/A */
 	uint32_t wr_preamble_2CK;	/* use 2tCK write preamble */
 	uint32_t rd_preamble_2CK;	/* use 2tCK read preamble */
