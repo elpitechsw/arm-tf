@@ -340,7 +340,7 @@ static void baikal_ddrphy_set_registers(const unsigned int port,
 				const struct ddr_configuration *data)
 {
 	/* configure a DCR reg. */
-	uint32_t regval = 0x28000404;
+	uint32_t regval = 0x00000404;
 
 	if (data->mirrored_dimm) {
 		/* address mirror */
