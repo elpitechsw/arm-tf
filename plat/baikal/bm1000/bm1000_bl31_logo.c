@@ -1,1 +1,1 @@
-elpitech_bl31_logo.c
+elpitech_bl31_logo_v2.c
